@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.5.1)
+project(deque)
+set(CMAKE_CXX_STANDARD 11)
+add_compile_options(-O2)
+add_executable(code code.cpp)

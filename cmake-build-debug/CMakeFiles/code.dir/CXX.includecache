@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/lairu/Documents/GitHub/DS1_STLite/deque/code.cpp
+iostream
+-
+vector
+-
+deque.hpp
+C:/Users/lairu/Documents/GitHub/DS1_STLite/deque/deque.hpp
+
+C:/Users/lairu/Documents/GitHub/DS1_STLite/deque/deque.hpp
+exceptions.hpp
+C:/Users/lairu/Documents/GitHub/DS1_STLite/deque/exceptions.hpp
+cstddef
+-
+
+C:/Users/lairu/Documents/GitHub/DS1_STLite/deque/exceptions.hpp
+cstddef
+-
+cstring
+-
+string
+-
+
