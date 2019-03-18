@@ -24,7 +24,7 @@ private:
 
     size_t _size;
 
-    int get_pos(const node *x) {
+    int get_pos(const node *x) const {
         int res = 0;
         node *p = head.next;
         while (p != x) {
@@ -33,6 +33,18 @@ private:
         }
 
         return res;
+    }
+
+    bool check_exist(const node* x) const {
+        if (x == &tail)
+            return true;
+        node* p = head.next;
+        while (p != &tail) {
+            if (p == x)
+                return true;
+            p = p->next;
+        }
+        return false;
     }
 
 public:
@@ -203,13 +215,12 @@ public:
 	private:
 	    deque *deque_address;
 	    typename LinkList<LinkList<T> >::node *linklist_node;
-
 	    typename LinkList<T>::node *p;
 
 	public:
-	    iterator() : deque_address(nullptr), linklist_node(nullptr), p(nullptr) {}
+        iterator() : deque_address(nullptr), linklist_node(nullptr), p(nullptr) {}
 
-        iterator(deque *d_a, LinkList<T> *l_a, typename LinkList<T>::node *_p) {
+        iterator(deque *d_a, typename LinkList<LinkList<T> >::node *l_a, typename LinkList<T>::node *_p) {
 	        deque_address = d_a;
 	        linklist_node = l_a;
 	        p = _p;
@@ -220,6 +231,12 @@ public:
             linklist_node = o.linklist_node;
             p = o.p;
 	    }
+
+        iterator(const const_iterator &o) {
+            deque_address = o.deque_address;
+            linklist_node = o.linklist_node;
+            p = o.p;
+        }
 
 		iterator operator+(const int &n) const {
 	        if (n == 0)
@@ -299,52 +316,258 @@ public:
 
 		}
 
-		iterator operator+=(const int &n) {
-			//TODO
+        int operator-(const const_iterator &o) const {
+            if (deque_address != o.deque_address)
+                throw invalid_iterator();
+
+            iterator a(*this), b(o);
+            bool flag = false;
+            int pos_a = deque_address->get_pos(linklist_node);
+            int pos_b = deque_address->get_pos(o.linklist_node);
+
+            if (pos_a == pos_b) {
+                pos_a = linklist_node->data->get_pos(p);
+                pos_b = linklist_node->data->get_pos(o.p);
+                return pos_a - pos_b;
+            }
+
+            if (pos_a > pos_b) {
+                swap(a, b);
+                swap(pos_a, pos_b);
+                flag = true;
+            }
+
+            pos_a = linklist_node->data->get_pos(p);
+            pos_b = o.linklist_node->data->get_pos(o.p);
+            int res = (linklist_node->data->_size - pos_a) + pos_b;
+
+            typename LinkList<LinkList<T> >::node *pointer = linklist_node->next;
+            while (pointer != o.linklist_node) {
+                res += pointer->data->_size;
+                pointer = pointer->next;
+            }
+
+            return flag ? -res : res;
+
+        }
+
+		iterator &operator+=(const int &n) {
+            *this = *this + n;
+            return *this;
 		}
-		iterator operator-=(const int &n) {
-			//TODO
+
+		iterator &operator-=(const int &n) {
+            *this = *this - n;
+            return *this;
 		}
-		iterator operator++(int) {}
 
-		iterator& operator++() {}
+		iterator operator++(int) {
+            iterator res = *this;
+            *this = *this + 1;
+            return res;
+        }
 
-		iterator operator--(int) {}
+		iterator& operator++() {
+            *this = *this + 1;
+            return *this;
+        }
 
-		iterator& operator--() {}
+		iterator operator--(int) {
+            iterator res = *this;
+            *this = *this - 1;
+            return res;
+        }
 
-		T& operator*() const {}
+		iterator& operator--() {
+            *this = *this + 1;
+            return *this;
+        }
 
-		T* operator->() const noexcept {}
-		/**
-		 * a operator to check whether two iterators are same (pointing to the same memory).
-		 */
-		bool operator==(const iterator &rhs) const {}
-		bool operator==(const const_iterator &rhs) const {}
-		/**
-		 * some other operator for iterator.
-		 */
-		bool operator!=(const iterator &rhs) const {}
-		bool operator!=(const const_iterator &rhs) const {}
+		T& operator*() const {
+            return *this->p->data;
+        }
+
+		T* operator->() const noexcept {
+            return &(*this->p->data);
+        }
+
+		bool operator==(const iterator &o) const {
+		    return p == o.p;
+		}
+
+		bool operator==(const const_iterator &o) const {
+            return p == o.p;
+        }
+
+		bool operator!=(const iterator &o) const {
+            return p != o.p;
+        }
+
+		bool operator!=(const const_iterator &o) const {
+            return p != o.p;
+        }
 	};
+
 	class const_iterator {
 		// it should has similar member method as iterator.
 		//  and it should be able to construct from an iterator.
-		private:
-			// data members.
-		public:
-			const_iterator() {
-				// TODO
-			}
-			const_iterator(const const_iterator &other) {
-				// TODO
-			}
-			const_iterator(const iterator &other) {
-				// TODO
-			}
-			// And other methods in iterator.
-			// And other methods in iterator.
-			// And other methods in iterator.
+
+	private:
+        deque *deque_address;
+        typename LinkList<LinkList<T> >::node *linklist_node;
+        typename LinkList<T>::node *p;
+
+	public:
+	    const_iterator() : deque_address(nullptr), linklist_node(nullptr), p(nullptr) {}
+
+	    const_iterator(const const_iterator &o) {
+            deque_address = o.deque_address;
+            linklist_node = o.linklist_node;
+            p = o.p;
+	    }
+
+	    const_iterator(const iterator &o) {
+            deque_address = o.deque_address;
+            linklist_node = o.linklist_node;
+            p = o.p;
+	    }
+
+        iterator operator+(const int &n) const {
+            if (n == 0)
+                return *this;
+            if (n < 0)
+                return *this - (-n);
+            int pos = linklist_node->data->get_pos(p);
+
+            if (pos + n < linklist_node->data->_size) {
+                typename LinkList<T>::node *q = p;
+                int target_pos = pos + n;
+                while (pos != target_pos) {
+                    q = q->next;
+                    pos++;
+                }
+                return iterator(deque_address, linklist_node, q);
+            }
+
+            iterator next_block_1st(deque_address, linklist_node->next, linklist_node->next->data->head.next);
+            return next_block_1st + (n - (linklist_node->data->_size - pos));
+        }
+
+        iterator operator-(const int &n) const {
+            if (n == 0)
+                return *this;
+            if (n < 0)
+                return *this + (-n);
+            int pos = linklist_node->data->get_pos(p);
+
+            if (pos - n >= 0) {
+                typename LinkList<T>::node *q = p;
+                int target_pos = pos - n;
+                while (pos != target_pos) {
+                    q = q->last;
+                    pos--;
+                }
+                return iterator(deque_address, linklist_node, q);
+            }
+
+            iterator last_block_end(deque_address, linklist_node->last, linklist_node->last->data->tail.last);
+            return last_block_end - (n - pos - 1);
+        }
+
+        // if these two iterators points to different vectors, throw invaild_iterator.
+        int operator-(const iterator &o) const {
+            if (deque_address != o.deque_address)
+                throw invalid_iterator();
+
+            iterator a(*this), b(o);
+            bool flag = false;
+            int pos_a = deque_address->get_pos(linklist_node);
+            int pos_b = deque_address->get_pos(o.linklist_node);
+
+            if (pos_a == pos_b) {
+                pos_a = linklist_node->data->get_pos(p);
+                pos_b = linklist_node->data->get_pos(o.p);
+                return pos_a - pos_b;
+            }
+
+            if (pos_a > pos_b) {
+                swap(a, b);
+                swap(pos_a, pos_b);
+                flag = true;
+            }
+
+            pos_a = linklist_node->data->get_pos(p);
+            pos_b = o.linklist_node->data->get_pos(o.p);
+            int res = (linklist_node->data->_size - pos_a) + pos_b;
+
+            typename LinkList<LinkList<T> >::node *pointer = linklist_node->next;
+            while (pointer != o.linklist_node) {
+                res += pointer->data->_size;
+                pointer = pointer->next;
+            }
+
+            return flag ? -res : res;
+
+        }
+
+        int operator-(const const_iterator &o) const {
+            if (deque_address != o.deque_address)
+                throw invalid_iterator();
+
+            iterator a(*this), b(o);
+            bool flag = false;
+            int pos_a = deque_address->get_pos(linklist_node);
+            int pos_b = deque_address->get_pos(o.linklist_node);
+
+            if (pos_a == pos_b) {
+                pos_a = linklist_node->data->get_pos(p);
+                pos_b = linklist_node->data->get_pos(o.p);
+                return pos_a - pos_b;
+            }
+
+            if (pos_a > pos_b) {
+                swap(a, b);
+                swap(pos_a, pos_b);
+                flag = true;
+            }
+
+            pos_a = linklist_node->data->get_pos(p);
+            pos_b = o.linklist_node->data->get_pos(o.p);
+            int res = (linklist_node->data->_size - pos_a) + pos_b;
+
+            typename LinkList<LinkList<T> >::node *pointer = linklist_node->next;
+            while (pointer != o.linklist_node) {
+                res += pointer->data->_size;
+                pointer = pointer->next;
+            }
+
+            return flag ? -res : res;
+
+        }
+
+        T& operator*() const {
+            return *this->p->data;
+        }
+
+        T* operator->() const noexcept {
+            return &(*this->p->data);
+        }
+
+        bool operator==(const iterator &o) const {
+            return p == o.p;
+        }
+
+        bool operator==(const const_iterator &o) const {
+            return p == o.p;
+        }
+
+        bool operator!=(const iterator &o) const {
+            return p != o.p;
+        }
+
+        bool operator!=(const const_iterator &o) const {
+            return p != o.p;
+        }
 	};
 
 private:
@@ -352,19 +575,13 @@ private:
     size_t element_size;
     //// block size = _size
 
+
 public:
 
-	/**
-	 * TODO Constructors
-	 */
-	deque() : LinkList<LinkList<T> >(), element_size(0) {
-	}
+	deque() : LinkList<LinkList<T> >(), element_size(0) { }
 
 	deque(const deque &o) : LinkList<LinkList<T> >(o), element_size(o.element_size) {}
 
-	/**
-	 * TODO Deconstructor
-	 */
 	~deque() = default;
 
 	deque& operator=(const deque &o) {
@@ -424,76 +641,80 @@ public:
         return this->tail.last->data->back();
 	}
 
-	/**
-	 * returns an iterator to the beginning.
-	 */
-	iterator begin() {}
-	const_iterator cbegin() const {}
-	/**
-	 * returns an iterator to the end.
-	 */
-	iterator end() {}
-	const_iterator cend() const {}
+	iterator begin() {
+	    return iterator(this, this->head.next, this->head.next->data->head.next);
+	}
 
-	/**
-	 * checks whether the container is empty.
-	 */
+	const_iterator cbegin() const {
+	    return const_iterator(this, this->head.next, this->head.next->data->head.next);
+	}
+
+	iterator end() {
+	    return iterator(this, this->tail.last, this->tail.last->data->tail.last);
+	}
+
+	const_iterator cend() const {
+        return const_iterator(this, this->tail.last, this->tail.last->data->tail.last);
+	}
+
 	bool empty() const {
 	    return element_size == 0;
 	}
 
-	/**
-	 * returns the number of elements
-	 */
 	size_t size() const {
 	    return element_size;
 	}
 
-	/**
-	 * clears the contents
-	 */
 	void clear() {
 	    LinkList<LinkList <T> >::clear();
 	    element_size = 0;
 	}
 
-	/**
-	 * inserts elements at the specified locate on in the container.
-	 * inserts value before pos
-	 * returns an iterator pointing to the inserted value
-	 *     throw if the iterator is invalid or it point to a wrong place.
-	 */
-	iterator insert(iterator pos, const T &value) {}
+	// inserts value before pos
+	// returns an iterator pointing to the inserted value
+	iterator insert(iterator pos, const T &value) {
+	    if (pos.deque_address != this)
+	        throw invalid_iterator();
+	    if (!check_exist(pos.linklist_node))
+	        throw invalid_iterator();
+	    if (!pos.linklist_node->data->check_exist(pos.p))
+	        throw invalid_iterator();
 
-	/**
-	 * removes specified element at pos.
-	 * removes the element at pos.
-	 * returns an iterator pointing to the following element, if pos pointing to the last element, end() will be returned.
-	 * throw if the container is empty, the iterator is invalid or it points to a wrong place.
-	 */
-	iterator erase(iterator pos) {}
 
-	/**
-	 * adds an element to the end
-	 */
-	void push_back(const T &value) {}
+	}
 
-	/**
-	 * removes the last element
-	 *     throw when the container is empty.
-	 */
-	void pop_back() {}
+	// removes the element at pos.
+	// returns an iterator pointing to the following element, if pos pointing to the last element, end() will be returned.
+	// throw if the container is empty, the iterator is invalid or it points to a wrong place.
+	iterator erase(iterator pos) {
+	    // if (empty())
+	    //     throw invalid_iterator();
+        if (pos.deque_address != this)
+            throw invalid_iterator();
+        if (!check_exist(pos.linklist_node))
+            throw invalid_iterator();
+        if (!pos.linklist_node->data->check_exist(pos.p))
+            throw invalid_iterator();
 
-	/**
-	 * inserts an element to the beginning.
-	 */
-	void push_front(const T &value) {}
+        if (pos == end?????)
 
-	/**
-	 * removes the first element.
-	 *     throw when the container is empty.
-	 */
-	void pop_front() {}
+	}
+
+	void push_back(const T &v) {
+        insert(iterator(this, this->tail.last, &(this->tail.last->data->tail)), v);
+	}
+
+	void pop_back() {
+	    erase(iterator(this, this->tail.last, this->tail.last->data->tail.last));
+	}
+
+	void push_front(const T &v) {
+        insert(iterator(this, this->head.next, this->head.next->data->head.next), v);
+	}
+
+	void pop_front() {
+	    erase(iterator(this, this->head.next, this->head.next->data->head.next));
+	}
 };
 
 }

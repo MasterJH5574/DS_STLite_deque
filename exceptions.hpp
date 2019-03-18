@@ -19,36 +19,16 @@ public:
 	}
 };
 
-/**
- * TODO
- * Please complete them.
- */
 class index_out_of_bound : public exception {
-public:
-    index_out_of_bound(const std::string &message = "") {
-        detail = message;
-    }
 };
 
 class runtime_error : public exception {
-public:
-    runtime_error(const std::string &message = "") {
-        detail = message;
-    }
 };
 
 class invalid_iterator : public exception {
-public:
-    invalid_iterator(const std::string &message = "") {
-        detail = message;
-    }
 };
 
 class container_is_empty : public exception {
-public:
-    container_is_empty(const std::string &message = "") {
-        detail = message;
-    }
 };
 }
 
