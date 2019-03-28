@@ -4,6 +4,7 @@
 #include "exceptions.hpp"
 #include <cstddef>
 #include <unordered_set>
+#include <cassert>
 
 namespace sjtu {
 
@@ -15,7 +16,9 @@ void swap(T &a, T &b) {
 
 template<class T>
 class LinkList {
-private:
+public:
+    static const size_t BLOCK_FULL_SIZE = 700;
+
     struct node {
         T *data;
         node *next, *last;
@@ -36,8 +39,6 @@ private:
     }
 
     bool check_exist(const node* x) const {
-        if (x == &tail)
-            return true;
         node* p = head.next;
         while (p != &tail) {
             if (p == x)
@@ -48,6 +49,7 @@ private:
     }
 
 public:
+
     LinkList() : head(node()), tail(node()), _size(0) {
         head.next = &tail;
         tail.last = &head;
@@ -60,7 +62,8 @@ public:
         if (o.empty())
             return;
 
-        node *p = &o.head, *pp = &head, *q = nullptr;
+        const node *p = &o.head;
+        node *pp = &head, *q = nullptr;
         while (p->next != &o.tail) {
             q = new node(new T(*(p->next->data)), nullptr, pp);
             pp->next = q;
@@ -73,7 +76,11 @@ public:
         clear();
     }
 
-    virtual bool empty() {
+    virtual bool full() const {
+        return _size == BLOCK_FULL_SIZE;
+    }
+
+    virtual bool empty() const {
         return _size == 0;
     }
 
@@ -108,68 +115,32 @@ public:
 
     virtual void clear() {
         node *p(nullptr);
-        while (head->next != &tail) {
-            p = head->next;
-            head->next = p->next;
+        while (head.next != &tail) {
+            p = head.next;
+            head.next = p->next;
             delete p->data;
             delete p;
         }
         init();
     }
 
-    // bad, need to rewrite
-    virtual void insert(size_t pos, const LinkList &L) {
-        // insert a whole linklist after pos-th element
-        // delete the original LinkList
-        if (pos < 0 || pos > _size + 1)
-            throw index_out_of_bound();
-
-        if (L.empty())
-            return;
-
-        size_t cur = 0;
-        node *p = &head, *q = nullptr;
-        while (cur != pos) {
-            pos++;
-            p = p->next;
-        }
-        q = p->next;
-
-        // merge left
-        p->next = L.head.next;
-        L.head.next->last = p;
-
-        // merge right
-        q->last = L.tail.last;
-        L.tail.last->next = q;
-
-        _size += L._size;
-
-        L.init();
+    virtual node *insert(node *pos, const T &v) {
+        node *p = new node(new T(v), pos, pos->last);
+        pos->last->next = p;
+        pos->last = p;
+        _size++;
+        return p;
     }
 
-    // bad, need to rewrite
-    virtual void insert(size_t pos, T data) {
-        // insert data after pos-th element
-        if (pos < 0 || pos > _size + 1)
-            throw index_out_of_bound();
-
-        LinkList _list;
-        node *p = new node(data, &_list.head, &_list.tail);
-        _list.head.next = p;
-        _list.tail.last = p;
-        _list._size = 1;
-
-        insert(pos, _list);
-    }
-
-    // unwritten
-    virtual void erase() {
-        // without parameter or methods yet
+    virtual void erase(node *pos) {
+        _size--;
+        pos->last->next = pos->next;
+        pos->next->last = pos->last;
+        delete pos->data;
     }
 
     // really need it?
-    virtual T &at(const size_t &pos) {
+    virtual T &At(const size_t &pos) {
         if (pos < 0 || pos >= _size)
             throw index_out_of_bound();
 
@@ -183,7 +154,7 @@ public:
     }
 
     // really need it?
-    virtual const T &at(const size_t &pos) const {
+    virtual const T &At(const size_t &pos) const {
         if (pos < 0 || pos >= _size)
             throw index_out_of_bound();
 
@@ -194,25 +165,16 @@ public:
             p = p->next;
         }
         return *p->data;
-    }
-
-    virtual const T &front() const {
-        return *(head.next->data);
-    }
-
-    virtual const T &back() const {
-        return *(tail.last->data);
     }
 };
 
 template <class T>
 class deque : public LinkList<LinkList<T> > {
-    static const int BLOCK = 500;
 
 public:
 	class const_iterator;
 	class iterator {
-	private:
+	public:
 	    deque *deque_address;
 	    typename LinkList<LinkList<T> >::node *linklist_node;
 	    typename LinkList<T>::node *p;
@@ -412,7 +374,7 @@ public:
 		// it should has similar member method as iterator.
 		//  and it should be able to construct from an iterator.
 
-	private:
+	public:
         deque *deque_address;
         typename LinkList<LinkList<T> >::node *linklist_node;
         typename LinkList<T>::node *p;
@@ -570,7 +532,7 @@ public:
         }
 	};
 
-private:
+public:
     // the number of elements in this deque
     size_t element_size;
     //// block size = _size
@@ -595,7 +557,7 @@ public:
 	}
 
 	// throw index_out_of_bound if out of bound.
-	T& at(const size_t &pos) {
+	T& at(size_t pos) {
 	    if (pos < 0 || pos >= element_size)
 	        throw index_out_of_bound();
 
@@ -604,10 +566,10 @@ public:
             pos -= p->data->size();
             p = p->next;
         }
-        return p->data->at(pos);
+        return p->data->At(pos);
 	}
 
-	const T& at(const size_t &pos) const {
+	const T& at(size_t pos) const {
         if (pos < 0 || pos >= element_size)
             throw index_out_of_bound();
 
@@ -616,7 +578,7 @@ public:
             pos -= p->data->size();
             p = p->next;
         }
-        return p->data->at(pos);
+        return p->data->At(pos);
 	}
 
 	T& operator[](const size_t &pos) {
@@ -650,11 +612,11 @@ public:
 	}
 
 	iterator end() {
-	    return iterator(this, this->tail.last, this->tail.last->data->tail.last);
+	    return iterator(this, &this->tail, &(this->tail.data->head));
 	}
 
 	const_iterator cend() const {
-        return const_iterator(this, this->tail.last, this->tail.last->data->tail.last);
+        return const_iterator(this, &this->tail, &(this->tail.data->head));
 	}
 
 	bool empty() const {
@@ -670,50 +632,157 @@ public:
 	    element_size = 0;
 	}
 
+    typename LinkList<LinkList<T> >::node *split(typename LinkList<LinkList<T> >::node *o, typename LinkList<T>::node *q) {
+	    int cnt = 0;
+	    bool flag = false;
+
+	    typename LinkList<T>::node *p = o->data->head.next;
+	    while (cnt != LinkList<LinkList<T> >::BLOCK_FULL_SIZE >> 1) {
+	        if (p == q)
+	            flag = true;
+            cnt++;
+            p = p->next;
+        }
+
+	    auto *a = new typename LinkList<LinkList<T> >::node(new LinkList<T>);
+        auto *b = new typename LinkList<LinkList<T> >::node(new LinkList<T>);
+        a->last = o->last, b->next = o->next;
+        a->next = b, b->last = a;
+        a->data->_size = LinkList<LinkList<T> >::BLOCK_FULL_SIZE >> 1;
+        b->data->_size = LinkList<LinkList<T> >::BLOCK_FULL_SIZE >> 1;
+
+        o->data->head.next->last = &a->data->head;
+        p->last->next = &a->data->tail;
+        a->data->head.next = o->data->head.next;
+        a->data->tail.last = p->last;
+
+        o->data->tail.last->next = &b->data->tail;
+        p->last = &b->data->head;
+        b->data->tail.last = o->data->tail.last;
+        b->data->head.next = p;
+
+        o->data->head.next = &o->data->tail;
+        o->data->tail.last = &o->data->head;
+
+        o->data->clear();
+        delete o;
+
+        return flag ? a : b;
+	}
+
+	typename LinkList<LinkList<T> >::node *merge(typename LinkList<LinkList<T> >::node *a, typename LinkList<LinkList<T> >::node *b) {
+	    auto *res = new typename LinkList<LinkList<T> >::node(new LinkList<T>, b->next, a->last);
+	    a->last->next = res;
+	    b->next->last = res;
+
+	    a->data->head.next->last = &res->data->head;
+	    a->data->tail.last->next = b->data->head.next;
+
+	    b->data->tail.last->next = &res->data->tail;
+	    b->data->head.next->last = a->data->tail.last;
+
+	    res->data->head.next = a->data->head.next;
+	    res->data->tail.last = b->data->tail.last;
+
+	    a->data->head.next = &a->data->tail;
+	    a->data->tail.last = &a->data->head;
+        b->data->head.next = &b->data->tail;
+        b->data->tail.last = &b->data->head;
+
+        a->data->clear();
+        b->data->clear();
+        delete a;
+        delete b;
+
+        return res;
+	}
+
 	// inserts value before pos
 	// returns an iterator pointing to the inserted value
-	iterator insert(iterator pos, const T &value) {
+	iterator insert(const iterator &pos, const T &v) {
+	    if (pos == end()) {
+            this->_size++;
+            if (element_size == 0) { // also block_size == 0
+                assert(LinkList<LinkList<T> >::size() == 0);
+                //typename LinkList<LinkList<T> >::node *p = new typename LinkList<LinkList<T> >::node(new LinkList<T>, &this->tail, &this->head);
+                auto *p = new typename LinkList<LinkList<T> >::node(new LinkList<T>, &this->tail, &this->head);
+                this->head.next = p;
+                this->tail.last = p;
+
+                typename LinkList<T>::node *q = p->data->insert(&p->data->tail, v);
+                return iterator(this, p, q);
+            } else {
+                typename LinkList<T>::node *q = this->tail.last->data->insert(&this->tail.last->data->tail, v);
+                typename LinkList<LinkList<T> >::node *p = this->tail.last;
+                if (this->tail.last->data->full())
+                    p = split(this->tail.last, q);
+
+                return iterator(this, p, q);
+            }
+	    }
+
+
 	    if (pos.deque_address != this)
 	        throw invalid_iterator();
-	    if (!check_exist(pos.linklist_node))
+	    if (!this->check_exist(pos.linklist_node))
 	        throw invalid_iterator();
 	    if (!pos.linklist_node->data->check_exist(pos.p))
 	        throw invalid_iterator();
 
+	    this->_size++;
+        typename LinkList<T>::node *q = pos.linklist_node->data->insert(pos.p, v);
+        typename LinkList<LinkList<T> >::node *p = pos.linklist_node;
+        if (p->data->full())
+            p = split(p, q);
 
+        return iterator(this, p, q);
 	}
 
 	// removes the element at pos.
 	// returns an iterator pointing to the following element, if pos pointing to the last element, end() will be returned.
 	// throw if the container is empty, the iterator is invalid or it points to a wrong place.
-	iterator erase(iterator pos) {
-	    // if (empty())
-	    //     throw invalid_iterator();
+	iterator erase(const iterator &pos) {
         if (pos.deque_address != this)
             throw invalid_iterator();
-        if (!check_exist(pos.linklist_node))
+        if (!this->check_exist(pos.linklist_node))
             throw invalid_iterator();
         if (!pos.linklist_node->data->check_exist(pos.p))
             throw invalid_iterator();
 
-        if (pos == end?????)
+        this->_size--;
+        typename LinkList<T>::node *p = (pos + 1).p;
+        pos.linklist_node->data->erase(pos.p);
 
+        typename LinkList<LinkList<T> >::node *t = nullptr;
+        if (pos.linklist_node->next != &this->tail && pos.linklist_node->data->size() + pos.linklist_node->next->data->size() <= (LinkList<LinkList<T> >::BLOCK_FULL_SIZE << 1) / 3)
+            t = merge(pos.linklist_node, pos.linklist_node->next);
+        else if (pos.linklist_node->last != &this->head && pos.linklist_node->data->size() + pos.linklist_node->last->data->size() <= (LinkList<LinkList<T> >::BLOCK_FULL_SIZE << 1) / 3)
+            t = merge(pos.linklist_node->last, pos.linklist_node);
+	    else
+	        t = pos.linklist_node;
+
+	    if (t->data->check_exist(p))
+	        return iterator(this, t, p);
+	    else {
+	        assert(t->next->data->check_exist(p));
+	        return iterator(this, t->next, p);
+	    }
 	}
 
 	void push_back(const T &v) {
-        insert(iterator(this, this->tail.last, &(this->tail.last->data->tail)), v);
+        insert(end(), v);
 	}
 
 	void pop_back() {
-	    erase(iterator(this, this->tail.last, this->tail.last->data->tail.last));
+	    erase(end() - 1);
 	}
 
 	void push_front(const T &v) {
-        insert(iterator(this, this->head.next, this->head.next->data->head.next), v);
+        insert(begin(), v);
 	}
 
 	void pop_front() {
-	    erase(iterator(this, this->head.next, this->head.next->data->head.next));
+	    erase(begin());
 	}
 };
 
