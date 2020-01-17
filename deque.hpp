@@ -182,33 +182,33 @@ template <class T>
 class deque : public LinkList<LinkList<T> > {
 
 public:
-	class const_iterator;
-	class iterator {
-	public:
-	    deque *deque_address;
-	    typename LinkList<LinkList<T> >::node *linklist_node;
-	    typename LinkList<T>::node *p;
+    class const_iterator;
+    class iterator {
+    public:
+        deque *deque_address;
+        typename LinkList<LinkList<T> >::node *linklist_node;
+        typename LinkList<T>::node *p;
 
-	public:
+    public:
         iterator() : deque_address(nullptr), linklist_node(nullptr), p(nullptr) {}
 
         iterator(deque *d_a, typename LinkList<LinkList<T> >::node *l_a, typename LinkList<T>::node *_p) {
-	        deque_address = d_a;
-	        linklist_node = l_a;
-	        p = _p;
-	    }
+            deque_address = d_a;
+            linklist_node = l_a;
+            p = _p;
+        }
 
-	    iterator(const iterator &o) {
+        iterator(const iterator &o) {
             deque_address = o.deque_address;
             linklist_node = o.linklist_node;
             p = o.p;
-	    }
+        }
 
-		iterator operator+(int n) const {
-	        if (n == 0)
-	            return *this;
-	        if (n < 0)
-	            return *this - (-n);
+        iterator operator+(int n) const {
+            if (n == 0)
+                return *this;
+            if (n < 0)
+                return *this - (-n);
 
             iterator end_iterator = deque_address->end();
 
@@ -237,9 +237,9 @@ public:
                 pos++;
             }
             return iterator(deque_address, it.linklist_node, q);
-		}
+        }
 
-		iterator operator-(int n) const {
+        iterator operator-(int n) const {
             if (n == 0)
                 return *this;
             if (n < 0)
@@ -271,7 +271,7 @@ public:
                 pos--;
             }
             return iterator(deque_address, it.linklist_node, q);
-		}
+        }
 
 
         // if these two iterators points to different vectors, throw invaild_iterator.
@@ -352,15 +352,15 @@ public:
             return res;
         }
 
-		iterator &operator+=(const int &n) {
+        iterator &operator+=(const int &n) {
             *this = *this + n;
             return *this;
-		}
+        }
 
-		iterator &operator-=(const int &n) {
+        iterator &operator-=(const int &n) {
             *this = *this - n;
             return *this;
-		}
+        }
 
 
         iterator operator++(int) {
@@ -418,18 +418,18 @@ public:
         bool operator!=(const const_iterator &o) const {
             return deque_address != o.deque_address || linklist_node != o.linklist_node || p != o.p;
         }
-	};
+    };
 
-	class const_iterator {
-		// it should has similar member method as iterator.
-		//  and it should be able to construct from an iterator.
+    class const_iterator {
+        // it should has similar member method as iterator.
+        //  and it should be able to construct from an iterator.
 
-	public:
+    public:
         const deque *deque_address;
         const typename LinkList<LinkList<T> >::node *linklist_node;
         const typename LinkList<T>::node *p;
 
-	public:
+    public:
         const_iterator() : deque_address(nullptr), linklist_node(nullptr), p(nullptr) {}
 
         const_iterator(const deque *d_a, const typename LinkList<LinkList<T> >::node *l_a, const typename LinkList<T>::node *_p) {
@@ -653,7 +653,7 @@ public:
         bool operator!=(const const_iterator &o) const {
             return deque_address != o.deque_address || linklist_node != o.linklist_node || p != o.p;
         }
-	};
+    };
 
 public:
     // the number of elements in this deque
@@ -663,35 +663,23 @@ public:
 
 public:
 
-	deque() : LinkList<LinkList<T> >(), element_size(0) { }
+    deque() : LinkList<LinkList<T> >(), element_size(0) { }
 
-	deque(const deque &o) : LinkList<LinkList<T> >(o), element_size(o.element_size) {}
+    deque(const deque &o) : LinkList<LinkList<T> >(o), element_size(o.element_size) {}
 
-	~deque() = default;
+    ~deque() = default;
 
-	deque& operator=(const deque &o) {
-	    if (this == &o)
-	        return *this;
+    deque& operator=(const deque &o) {
+        if (this == &o)
+            return *this;
 
-	    LinkList<LinkList<T> >::operator=(o);
+        LinkList<LinkList<T> >::operator=(o);
         element_size = o.element_size;
-	    return *this;
-	}
+        return *this;
+    }
 
-	// throw index_out_of_bound if out of bound.
-	T& at(size_t pos) {
-	    if (pos < 0 || pos >= element_size)
-	        throw index_out_of_bound();
-
-	    typename LinkList<LinkList<T> >::node *p = this->head.next;
-        while (pos >= p->data->_size) {
-            pos -= p->data->_size;
-            p = p->next;
-        }
-        return p->data->At(pos);
-	}
-
-	const T& at(size_t pos) const {
+    // throw index_out_of_bound if out of bound.
+    T& at(size_t pos) {
         if (pos < 0 || pos >= element_size)
             throw index_out_of_bound();
 
@@ -701,83 +689,95 @@ public:
             p = p->next;
         }
         return p->data->At(pos);
-	}
+    }
 
-	T& operator[](const size_t &pos) {
-	    return at(pos);
-	}
+    const T& at(size_t pos) const {
+        if (pos < 0 || pos >= element_size)
+            throw index_out_of_bound();
 
-	const T& operator[](const size_t &pos) const {
-	    return at(pos);
-	}
+        typename LinkList<LinkList<T> >::node *p = this->head.next;
+        while (pos >= p->data->_size) {
+            pos -= p->data->_size;
+            p = p->next;
+        }
+        return p->data->At(pos);
+    }
 
-	// throw container_is_empty when the container is empty.
-	const T& front() const {
-	    if (empty())
-	        throw container_is_empty();
-	    return *cbegin();
-	}
+    T& operator[](const size_t &pos) {
+        return at(pos);
+    }
+
+    const T& operator[](const size_t &pos) const {
+        return at(pos);
+    }
 
     // throw container_is_empty when the container is empty.
-	const T& back() const {
+    const T& front() const {
+        if (empty())
+            throw container_is_empty();
+        return *cbegin();
+    }
+
+    // throw container_is_empty when the container is empty.
+    const T& back() const {
         if (empty())
             throw container_is_empty();
         return *(this->tail.last->data->tail.last->data);
-	}
+    }
 
-	iterator begin() {
+    iterator begin() {
         if (empty())
             return end();
         else
-	        return iterator(this, this->head.next, this->head.next->data->head.next);
-	}
+            return iterator(this, this->head.next, this->head.next->data->head.next);
+    }
 
-	const_iterator cbegin() const {
+    const_iterator cbegin() const {
         if (empty())
             return cend();
         else
-	        return const_iterator(this, this->head.next, this->head.next->data->head.next);
-	}
+            return const_iterator(this, this->head.next, this->head.next->data->head.next);
+    }
 
-	iterator end() {
-	    //return iterator(this, &this->tail, &(this->tail.data->head));
+    iterator end() {
+        //return iterator(this, &this->tail, &(this->tail.data->head));
         return iterator(this, &this->tail, nullptr);
-	}
+    }
 
-	const_iterator cend() const {
+    const_iterator cend() const {
         return const_iterator(this, &this->tail, nullptr);
         //return const_iterator(this, &this->tail, &(this->tail.data->head));
-	}
+    }
 
-	bool empty() const {
-	    return element_size == 0;
-	}
+    bool empty() const {
+        return element_size == 0;
+    }
 
-	size_t size() const {
-	    return element_size;
-	}
+    size_t size() const {
+        return element_size;
+    }
 
-	void clear() {
-	    LinkList<LinkList <T> >::clear();
-	    element_size = 0;
-	}
+    void clear() {
+        LinkList<LinkList <T> >::clear();
+        element_size = 0;
+    }
 
     typename LinkList<LinkList<T> >::node *split(typename LinkList<LinkList<T> >::node *o, typename LinkList<T>::node *q) {
-	    int cnt = 0;
-	    bool flag = false;
+        int cnt = 0;
+        bool flag = false;
 
-	    typename LinkList<T>::node *p = o->data->head.next;
+        typename LinkList<T>::node *p = o->data->head.next;
         size_t cur_size = o->data->_size;
 
-	    while (cnt != cur_size >> 1) {
-	        if (p == q)
-	            flag = true;
+        while (cnt != cur_size >> 1) {
+            if (p == q)
+                flag = true;
             cnt++;
             p = p->next;
         }
 
 
-	    auto *a = new typename LinkList<LinkList<T> >::node(new LinkList<T>);
+        auto *a = new typename LinkList<LinkList<T> >::node(new LinkList<T>);
         auto *b = new typename LinkList<LinkList<T> >::node(new LinkList<T>);
         a->last = o->last, b->next = o->next;
         a->next = b, b->last = a;
@@ -803,26 +803,26 @@ public:
         delete o;
 
         return flag ? a : b;
-	}
+    }
 
-	typename LinkList<LinkList<T> >::node *merge(typename LinkList<LinkList<T> >::node *a, typename LinkList<LinkList<T> >::node *b) {
-	    auto *res = new typename LinkList<LinkList<T> >::node(new LinkList<T>, b->next, a->last);
+    typename LinkList<LinkList<T> >::node *merge(typename LinkList<LinkList<T> >::node *a, typename LinkList<LinkList<T> >::node *b) {
+        auto *res = new typename LinkList<LinkList<T> >::node(new LinkList<T>, b->next, a->last);
         res->data->_size = a->data->_size + b->data->_size;
 
-	    a->last->next = res;
-	    b->next->last = res;
+        a->last->next = res;
+        b->next->last = res;
 
-	    a->data->head.next->last = &res->data->head;
-	    a->data->tail.last->next = b->data->head.next;
+        a->data->head.next->last = &res->data->head;
+        a->data->tail.last->next = b->data->head.next;
 
-	    b->data->tail.last->next = &res->data->tail;
-	    b->data->head.next->last = a->data->tail.last;
+        b->data->tail.last->next = &res->data->tail;
+        b->data->head.next->last = a->data->tail.last;
 
-	    res->data->head.next = a->data->head.next;
-	    res->data->tail.last = b->data->tail.last;
+        res->data->head.next = a->data->head.next;
+        res->data->tail.last = b->data->tail.last;
 
-	    a->data->head.next = &a->data->tail;
-	    a->data->tail.last = &a->data->head;
+        a->data->head.next = &a->data->tail;
+        a->data->tail.last = &a->data->head;
         b->data->head.next = &b->data->tail;
         b->data->tail.last = &b->data->head;
 
@@ -832,12 +832,12 @@ public:
         delete b;
 
         return res;
-	}
+    }
 
-	// inserts value before pos
-	// returns an iterator pointing to the inserted value
-	iterator insert(const iterator &pos, const T &v) {
-	    if (pos == end()) {
+    // inserts value before pos
+    // returns an iterator pointing to the inserted value
+    iterator insert(const iterator &pos, const T &v) {
+        if (pos == end()) {
             if (element_size == 0) { // also block_size == 0
                 element_size++;
                 assert(LinkList<LinkList<T> >::_size == 0);
@@ -857,15 +857,15 @@ public:
 
                 return iterator(this, p, q);
             }
-	    }
+        }
 
 
-	    if (pos.deque_address != this)
-	        throw invalid_iterator();
-	    if (!this->check_exist(pos.linklist_node))
-	        throw invalid_iterator();
-	    if (!pos.linklist_node->data->check_exist(pos.p))
-	        throw invalid_iterator();
+        if (pos.deque_address != this)
+            throw invalid_iterator();
+        if (!this->check_exist(pos.linklist_node))
+            throw invalid_iterator();
+        if (!pos.linklist_node->data->check_exist(pos.p))
+            throw invalid_iterator();
 
         element_size++;
         typename LinkList<T>::node *q = pos.linklist_node->data->insert(pos.p, v);
@@ -874,7 +874,7 @@ public:
             p = split(p, q);
 
         return iterator(this, p, q);
-	}
+    }
 
 
     // removes the element at pos.
@@ -939,57 +939,57 @@ public:
 
     void push_back(const T &v) {
         insert(end(), v);
-	}
+    }
 
-	void pop_back() {
-	    if (empty())
-	        throw container_is_empty();
+    void pop_back() {
+        if (empty())
+            throw container_is_empty();
         typename LinkList<LinkList<T> >::node *p = this->tail.last;
 
-	    element_size--;
-	    if (!element_size) {
-	        this->head.next = &this->tail;
-	        this->tail.last = &this->head;
-	        delete p->data;
-	        delete p;
-	        return;
-	    }
-
-	    p->data->erase(p->data->tail.last);
-	    if (p->data->_size == 0) {
-	        this->tail.last = p->last;
-	        p->last->next = &this->tail;
-	        delete p->data;
-	        delete p;
-	    }
-	}
-
-	void push_front(const T &v) {
-        insert(begin(), v);
-	}
-
-	void pop_front() {
-	    if (empty())
-	        throw container_is_empty();
-	    typename LinkList<LinkList<T> >::node *p = this->head.next;
-
-	    element_size--;
-	    if (!element_size) {
+        element_size--;
+        if (!element_size) {
             this->head.next = &this->tail;
             this->tail.last = &this->head;
             delete p->data;
             delete p;
             return;
-	    }
+        }
 
-	    p->data->erase(p->data->head.next);
+        p->data->erase(p->data->tail.last);
+        if (p->data->_size == 0) {
+            this->tail.last = p->last;
+            p->last->next = &this->tail;
+            delete p->data;
+            delete p;
+        }
+    }
+
+    void push_front(const T &v) {
+        insert(begin(), v);
+    }
+
+    void pop_front() {
+        if (empty())
+            throw container_is_empty();
+        typename LinkList<LinkList<T> >::node *p = this->head.next;
+
+        element_size--;
+        if (!element_size) {
+            this->head.next = &this->tail;
+            this->tail.last = &this->head;
+            delete p->data;
+            delete p;
+            return;
+        }
+
+        p->data->erase(p->data->head.next);
         if (p->data->_size == 0) {
             this->head.next = p->next;
             p->next->last = &this->head;
             delete p->data;
             delete p;
         }
-	}
+    }
 };
 
 }
